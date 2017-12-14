@@ -28,7 +28,7 @@ public class ApiClient {
     public static Retrofit getClient() {
         if (retrofit==null) {
             retrofit = new Retrofit.Builder()
-                    .baseUrl("http://197.232.17.86:81/CancerAlliance/")
+                    .baseUrl("http://197.232.17.86:81/")
                     .addConverterFactory(GsonConverterFactory.create())
                     .client(okHttpClient)
                     .build();

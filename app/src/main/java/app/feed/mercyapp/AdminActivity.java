@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
+import app.feed.mercyapp.ui.activities.EventUploadActivity;
 import app.feed.mercyapp.ui.activities.FeedUploadActivity;
 
 public class AdminActivity extends AppCompatActivity implements View.OnClickListener {
@@ -33,13 +34,13 @@ public class AdminActivity extends AppCompatActivity implements View.OnClickList
         switch (view.getId()) {
             case R.id.btnFeed:
                 startActivity(new Intent(AdminActivity.this, FeedUploadActivity.class));
-
-        }
-        switch (view.getId()) {
+                break;
             case R.id.btnEvent:
                 startActivity(new Intent(AdminActivity.this, EventUploadActivity.class));
+                break;
 
         }
+
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

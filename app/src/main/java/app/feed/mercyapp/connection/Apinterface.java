@@ -2,7 +2,10 @@ package app.feed.mercyapp.connection;
 
 import java.util.List;
 
+import app.feed.mercyapp.models.requests.EventRequest;
 import app.feed.mercyapp.models.requests.FeedUploadRequest;
+import app.feed.mercyapp.models.responses.EventResponse;
+import app.feed.mercyapp.models.responses.EventsListResponse;
 import app.feed.mercyapp.models.responses.FeedResponse;
 import app.feed.mercyapp.models.responses.FeedUploadResponse;
 import okhttp3.MultipartBody;
@@ -22,10 +25,16 @@ import retrofit2.http.Part;
  */
 
 public interface Apinterface {
-
-    @POST("saveDetails")
+ //   http://197.232.17.86:81/CancerAllianceUpdate/
+    @POST("CancerAlliance/saveDetails")
     Call<FeedUploadResponse> save_feed(@Body FeedUploadRequest feedUploadRequest);
 
-    @GET("ViewData")
+    @GET("CancerAlliance/ViewData")
     Call<List<FeedResponse>> getFeed();
+
+    @POST("CancerAllianceUpdate/saveEvent")
+    Call<EventResponse> saveEvent(@Body EventRequest eventRequest);
+
+    @GET("CancerAllianceUpdate/ViewEvent")
+    Call<List<EventsListResponse>> getAllEvents();
 }

@@ -1,4 +1,4 @@
-package app.feed.mercyapp;
+package app.feed.mercyapp.ui.activities;
 
 import android.app.Activity;
 import android.app.DatePickerDialog;
@@ -7,7 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,15 +19,34 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.Api;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+import com.google.gson.Gson;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-import app.feed.mercyapp.ui.activities.FeedUploadActivity;
+import app.feed.mercyapp.AdminActivity;
+import app.feed.mercyapp.R;
+import app.feed.mercyapp.connection.ApiClient;
+import app.feed.mercyapp.connection.Apinterface;
+import app.feed.mercyapp.connection.ErrorUtils;
+import app.feed.mercyapp.models.requests.EventRequest;
+import app.feed.mercyapp.models.requests.FeedUploadRequest;
+import app.feed.mercyapp.models.responses.EventResponse;
+import app.feed.mercyapp.models.responses.FeedUploadResponse;
 import app.feed.mercyapp.utills.Util;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class EventUploadActivity extends AppCompatActivity implements View.OnClickListener {
-ImageButton imageButton_event;
-    TextView ev_title, ev_venue, ev_when,ev_time,ev_desc;
+    ImageButton imageButton_event;
+    TextView ev_title, ev_venue, ev_when, ev_time, ev_desc;
     Button submit;
     int MY_READ_PERMISSION_REQUEST_CODE = 1;
     int PICK_IMAGE_REQUEST = 2;
@@ -36,6 +55,7 @@ ImageButton imageButton_event;
     private Uri uri;
     private String downloadUri;
     private ProgressDialog progressDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,14 +73,11 @@ ImageButton imageButton_event;
                 } else if (ev_venue.getText().toString().isEmpty()) {
                     Toast.makeText(EventUploadActivity.this, "Please add a venue",
                             Toast.LENGTH_SHORT).show();
-                }
-
-                else if (ev_desc.getText().toString().isEmpty()) {
+                } else if (ev_desc.getText().toString().isEmpty()) {
                     Toast.makeText(EventUploadActivity.this, "Please describe the event",
                             Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    // addDetails();
+                } else {
+                    // save data to db....
                     uploadDetails();
                 }
             }
@@ -70,9 +87,9 @@ ImageButton imageButton_event;
         ev_venue = findViewById(R.id.ev_venue);
         ev_when = findViewById(R.id.ev_when);
         ev_time = findViewById(R.id.ev_time);
-        ev_desc= findViewById(R.id.ev_desc);
+        ev_desc = findViewById(R.id.ev_desc);
 
-        TextView ev_when=  findViewById(R.id.ev_when);
+        TextView ev_when = findViewById(R.id.ev_when);
         ev_when.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -83,18 +100,67 @@ ImageButton imageButton_event;
 
     private void uploadDetails() {
 
-
         progressDialog = new ProgressDialog(EventUploadActivity.this);
         progressDialog.setMessage("Uploading event...");
         progressDialog.show();
 
-        new Handler().postDelayed(new Runnable() {
+        StorageReference mStorageRef = FirebaseStorage.getInstance().getReference().child("Events");
+        mStorageRef.child(Util.generateString()).putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
-            public void run() {
-                progressDialog.dismiss();
-            finish();
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                EventRequest eventRequest = new EventRequest();
+                eventRequest.setEventVenue(ev_venue.getText().toString());
+                eventRequest.setEventTittle(ev_title.getText().toString());
+                eventRequest.setEventTime(ev_time.getText().toString());
+                eventRequest.setEventImage(taskSnapshot.getDownloadUrl().toString());
+                eventRequest.setEventDescription(ev_desc.getText().toString());
+
+
+                // downloadUri =taskSnapshot.getDownloadUrl().toString() ;
+                Util.writeLog("downloadurl", taskSnapshot.getDownloadUrl().toString());
+                Util.writeLog("request ", new Gson().toJson(eventRequest));
+
+                Apinterface apinterface = ApiClient.getClient().create(Apinterface.class);
+                Call<EventResponse> call = apinterface.saveEvent(eventRequest);
+                call.enqueue(new Callback<EventResponse>() {
+                    @Override
+                    public void onResponse(Call<EventResponse> call, Response<EventResponse> response) {
+
+                        progressDialog.dismiss();
+                        Util.writeLog("response ", new Gson().toJson(response));
+
+                        if (response.code() == 200) {
+
+                            Toast.makeText(EventUploadActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                            finish();
+
+                        } else {
+                            Toast.makeText(EventUploadActivity.this, "Something went wrong!Try again", Toast.LENGTH_SHORT).show();
+                        }
+
+                    }
+
+                    @Override
+                    public void onFailure(Call<EventResponse> call, Throwable t) {
+
+                        progressDialog.dismiss();
+                        Toast.makeText(EventUploadActivity.this, new ErrorUtils().parseOnFailure(t), Toast.LENGTH_SHORT).show();
+
+                    }
+                });
+
+
             }
-        }, 5000);
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                e.printStackTrace();
+                progressDialog.dismiss();
+                Util.writeLog(FeedUploadActivity.class.getSimpleName(), "Error in uploading image!Try later or post without image");
+                // App.showError(getActivity(), );
+            }
+        });
 
     }
 
@@ -118,7 +184,8 @@ ImageButton imageButton_event;
         }
 
 
-        }
+    }
+
     @Override
     public void onActivityResult(int reqCode, int resultCode, Intent data) {
         if (resultCode == Activity.RESULT_OK && reqCode == PICK_IMAGE_REQUEST) {
@@ -128,9 +195,10 @@ ImageButton imageButton_event;
             // gracefully handle failure
             Log.w("debug", "Warning: activity result not ok");
         }
-        return ;
+        return;
 
     }
+
     public void getDate() {
         final Calendar mcurrentDate = Calendar.getInstance();
         int mYear = mcurrentDate.get(Calendar.YEAR);

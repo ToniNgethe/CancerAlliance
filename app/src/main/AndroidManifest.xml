@@ -8,6 +8,8 @@
         android:label="Cancer Alliance"
         android:roundIcon="@drawable/canceralliance"
         android:supportsRtl="true"
+        android:largeHeap="true"
+        android:hardwareAccelerated="true"
         android:theme="@style/AppTheme">
         <activity android:name=".ui.MainActivity">
         </activity>
@@ -40,7 +42,7 @@
             android:name=".ui.activities.FeedUploadActivity"
             android:windowSoftInputMode="stateHidden" />
         <activity
-            android:name=".EventUploadActivity"
+            android:name=".ui.activities.EventUploadActivity"
             android:windowSoftInputMode="stateHidden" />
         <activity
             android:name=".adminMenu"

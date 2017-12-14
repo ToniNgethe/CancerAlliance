@@ -16,11 +16,9 @@ import com.yarolegovich.slidingrootnav.SlidingRootNav;
 import com.yarolegovich.slidingrootnav.SlidingRootNavBuilder;
 
 import app.feed.mercyapp.About;
-import app.feed.mercyapp.AdminActivity;
-import app.feed.mercyapp.EventsFragment;
+import app.feed.mercyapp.ui.fragments.EventsFragment;
 import app.feed.mercyapp.FeedBackFragment;
 import app.feed.mercyapp.Login2Activity;
-import app.feed.mercyapp.LoginActivity;
 import app.feed.mercyapp.PartnersActivity;
 import app.feed.mercyapp.ui.fragments.HomeFragment;
 import app.feed.mercyapp.R;
